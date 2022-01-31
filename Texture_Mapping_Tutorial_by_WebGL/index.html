@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<head>
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="gl-matrix.js"> </script>
+<script type="text/javascript" src="script.js"></script> 
+<script> 
+window['mat4'] = glMatrix.mat4;
+window['vec4'] = glMatrix.vec4;
+window['vec3'] = glMatrix.vec4;
+</script>
+
+
+<title>Texture Mapping Tutorial by WebGL</title>
+</head>
+
+<body onload="main()">
+
+
+        <button onclick="OpenPage(1)" style="font-family:굴림;"> 페이지 1</button>
+        <button onclick="OpenPage(2)" style="font-family:굴림;"> 페이지 2</button>
+        <button onclick="OpenPage(3)" style="font-family:굴림;"> 페이지 3</button>
+        
+        <span class="page(1)" style="display: block;">
+			<p style = "font-size:18px; font-family:italic bold";>
+				<br>
+				물체를 가상의 3D공간에 구현하기 위해서는 다수의 폴리곤이 필요합니다.
+				<br>
+				<br>
+				이러한 문제점을 해결하고 물체를 효율적으로 구현하기 위해 우리는 텍스쳐 매핑이라는 기술을 고안하였고,
+				<br>
+				이 기술을 통해 물체에 이미지를 덧씌워 물체의 질감이나 세부적인 요철 등을 보다 적은 수의 폴리곤으로 표현할 수 있게 되었습니다.
+				<br>
+				<br>		
+				이 텍스쳐 매핑의 물체의 공간 좌표를 계산하고, 텍스쳐 좌표계와 대응시키는 과정을 이론과 코드로만 배우게 되면 이해하기 쉽지 않습니다.
+				<br>
+				또한, 실습 과정에서 좌표를 수정하고 다시 컴파일을 하여 화면을 확인하는 과정은 매우 번거롭습니다.
+				<br>
+				<br>
+				따라서 텍스쳐 좌표계를 손쉽게 수정하고, 실제 모델에 이를 실시간으로 반영시켜 시각적으로 확인해,
+				<br>
+				이에 대한 기초지식이 전무한 사람들의 이해를 돕기 위하여 이러한 주제를 선정하였습니다.
+				
+            </p>
+			<br>
+
+		</span>
+		<span class="page(2)" style="display: block;">
+			<p style = "font-family: serif";>
+                이번 페이지는 아주 간단한 도형을 다룹니다.
+				<br>
+				정육면체, 원기둥, 구가 있습니다.
+				<br>
+				이들의 버텍스들을 매핑된 텍스쳐 좌표계에 나타내면 우측 캔버스와 같이 보통 전개도의 형태를 보입니다.
+				<br>
+				<button onclick="Swap_simpleTex()">텍스쳐 변경</button>
+            </p>
+		</span>
+		<span class="page(3)" style="display: block;">
+			<p style = "font-family: serif";>
+                일반 오브젝트 모델 맵핑
+				
+				<br>
+				<br>
+				앞선 example 들과는 다르게 실제로 사용되는 오브젝트들은 알아보기 힘들 정도로 복잡하게 매핑이 되어있습니다.
+ 				<br>
+				아래의 예제는 낮은 폴리곤의 오브젝트지만, 이마저도 한눈에 알아보기는 어렵습니다.
+				<br>
+				직접 좌표계를 수정해보며 어느 부분이 바뀌게 되는지 볼 수 있습니다.
+				</p>
+								
+		</span>
+		
+		
+		<button onclick="Enable_wire()" style="width: 397px;" > 와이어프레임 보기 </button>
+		<button onclick="Enable_ver()" style="width: 397px;" > 버텍스 보기 </button>	
+
+		
+		<select onclick="Entire_map()" id="map_param" style="width: 297px;">
+			<option value="1">텍스쳐 맵 보기(기본)</option>
+			<option value="2">한칸씩 늘리기</option>
+			<option value="3">두칸씩 늘리기</option>
+			<option value="4">세칸씩 늘리기</option>
+		</select>
+		<br>
+		<canvas id="helloapicanvas" style="border: none;" width="800" height="600"></canvas>
+			
+		<canvas id="UV" style="border:1px solid #000000;" width="600" height="600"></canvas>
+		<br>
+		<button onclick="Reset_view()" style="width: 800px;" > 뷰포트 초기화 </button>
+		<button onclick="Reset_uvview()" style="width: 297px;" > 시점 초기화 </button>
+		<button onclick="Reset_uv()" style="width: 297px;" > UV 초기화 </button>
+		
+		<br>
+		<br>
+		<br>
+		
+		<span class="page(1)" style="display: block;">
+			<button onclick="Set_page1(1)">삼각형</button>
+			<button onclick="Set_page1(2)">사각형</button>
+		
+			<br>
+			<br>
+			우선 첫 페이지에서는 가장 기초인 삼각면, 사각면을 다룹니다.
+			<br>
+			위의 좌측 캔버스가 3D 모델 뷰이고, 우측 캔버스는 텍스쳐 좌표계를 보기 쉽게 구현한 것입니다.
+			<br>
+			<br>
+			좌측 위 버튼을 통하여 삼각면, 사각면이 선택 가능합니다.
+			사각면은 기존 삼각형의 우상단에 다른 삼각면을 이어 붙인 것입니다.
+			<br>
+			<p style = "font-family: serif";>
+			<p style = "font-size:24px; font-family:italic bold";>
+			구현 기능들
+			</p>
+			<img src="img/1.gif"><br>
+			우측 캔버스 위에서 매핑된 uv 좌표를 마우스로 조작할 수 있습니다.		
+			마우스 휠을 돌려 화면을 확대/축소 시킬 수 있습니다.
+			이 시점이나 uv좌표를 원래대로 초기화시키는 버튼은 따로 있습니다.
+			<br><br>
+			
+			<img src="img/2.gif"><br>
+			좌측 캔버스에서는 매핑이 된 3D모델을 볼 수 있습니다.
+			마우스로 회전이 가능하고 휠로 화면을 확대/축소 시킬 수 있습니다.
+			와이어프레임, 버텍스를 보이게 하는 것도 가능합니다.
+			<br><br>
+			
+			<img src="img/3.gif"><br>
+			uv좌표를 수정하면 바로 관찰할 수 있습니다.
+			그리고 uv좌표 상에서 선택된 버텍스는 좌/우 캔버스 모두에서 색이 붉게 바뀝니다.
+			<br><br>
+			
+			<img src="img/4.gif"><br>
+			마지막으로 우측 캔버스에서 uv좌표가 0~1을 벗어날 경우 어떤 방식으로 텍스쳐가 적용되는지 볼 수 있습니다.
+			
+			
+			</p>
+		</span>
+		<span class="page(2)" style="display: block;">
+			<button onclick="Set_page2(1)">정육면체</button>
+			<button onclick="Set_page2(2)">원기둥</button>
+			<button onclick="Set_page2(3)">구</button>
+			
+			<p style = "font-family: serif";>
+			<p style = "font-size:24px; font-family:italic bold";>
+			구현 기능들
+			</p>
+			두번쨰 페이지에서는 간단한 3차원 도형들인 정육면체, 원기둥, 구를 다룹니다.
+			<br>
+			<br>
+			<img src="img/6.gif"><br>
+			각 도형 버튼을 통해 모델을 변경할 수 있습니다.
+			<br><br>
+			
+			<img src="img/7.gif"><br>
+			또한 텍스쳐 변경 버튼을 통하여 각기 다른 텍스쳐를 불러올 수 있습니다
+
+			
+		</span>
+		<span class="page(3)" style="display: block;">
+
+			<p style = "font-family: serif";>
+			<p style = "font-size:24px; font-family:italic bold";>
+			</p>
+			세번쨰 페이지에서는 가장 흔하게 쓰이는 3D 모델인 teapot를 다룹니다.
+			<br>
+			작은 크기의 텍스쳐를 연속적으로 불러올 경우 어떤 방식으로 텍스쳐가 적용되는지 볼 수 있습니다.
+			<br>
+
+		</span>
+		<br>
+		<br>
+		<br>
+		<button onclick="OpenPage(1)" style="font-family:굴림;"> 페이지 1</button>
+        <button onclick="OpenPage(2)" style="font-family:굴림;"> 페이지 2</button>
+        <button onclick="OpenPage(3)" style="font-family:굴림;"> 페이지 3</button>
+</body>
+</html> 
