@@ -2,9 +2,6 @@
 
 WebGL Texture Mapping Tutorial
 
-(MIT License) 2020 LEE ByeoungChan
-
-
 
 물체를 가상의 3D공간에 있는 그대로 구현하려면 엄청난 양의 폴리곤이 필요합니다.
 
